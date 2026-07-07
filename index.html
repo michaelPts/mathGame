@@ -31,6 +31,10 @@
   .sound-toggle{
     position:absolute;
     top:0; right:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:0;
     font-size:22px;
     background:#ffffffcc;
     border:2px solid #e0b96a;
@@ -307,25 +311,29 @@
     if(!audioCtx){
       audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     }
-    if(audioCtx.state === 'suspended'){
-      audioCtx.resume();
-    }
     return audioCtx;
   }
 
   function tone(freq, startTime, duration, type, vol){
     const ctx = ensureAudioCtx();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = type || 'sine';
-    osc.frequency.value = freq;
-    const t0 = ctx.currentTime + startTime;
-    gain.gain.setValueAtTime(0, t0);
-    gain.gain.linearRampToValueAtTime(vol || 0.2, t0 + 0.02);
-    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + duration);
-    osc.connect(gain).connect(ctx.destination);
-    osc.start(t0);
-    osc.stop(t0 + duration + 0.05);
+    const playNow = () => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = type || 'sine';
+      osc.frequency.value = freq;
+      const t0 = ctx.currentTime + startTime;
+      gain.gain.setValueAtTime(0, t0);
+      gain.gain.linearRampToValueAtTime(vol || 0.2, t0 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t0 + duration);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(t0);
+      osc.stop(t0 + duration + 0.05);
+    };
+    if(ctx.state === 'suspended'){
+      ctx.resume().then(playNow);
+    } else {
+      playNow();
+    }
   }
 
   function playCorrectSound(){
